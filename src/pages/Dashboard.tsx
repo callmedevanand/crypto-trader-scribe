@@ -8,6 +8,7 @@ import DashboardStats from "@/components/dashboard/DashboardStats";
 import TradesList from "@/components/trades/TradesList";
 import AddTradeDialog from "@/components/trades/AddTradeDialog";
 import PortfolioView from "@/components/portfolio/PortfolioView";
+import AnalyticsCharts from "@/components/analytics/AnalyticsCharts";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -123,6 +124,10 @@ const Dashboard = () => {
               </Button>
             </div>
             <DashboardStats userId={user?.id} />
+            <div>
+              <h3 className="text-2xl font-bold mb-4">Performance Analytics</h3>
+              <AnalyticsCharts userId={user?.id} />
+            </div>
           </div>
         )}
 

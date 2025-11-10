@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -16,6 +17,18 @@ interface AddTradeDialogProps {
 
 const AddTradeDialog = ({ open, onOpenChange, userId }: AddTradeDialogProps) => {
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<"simple" | "advanced">("simple");
+  
+  // Simple mode data
+  const [simpleData, setSimpleData] = useState({
+    asset_pair: "",
+    result: "win" as "win" | "loss",
+    amount: "",
+    exchange: "",
+    strategy_tag: "",
+  });
+
+  // Advanced mode data
   const [formData, setFormData] = useState({
     asset_pair: "",
     trade_type: "long" as "long" | "short",
@@ -29,7 +42,50 @@ const AddTradeDialog = ({ open, onOpenChange, userId }: AddTradeDialogProps) => 
     status: "open" as "open" | "closed",
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSimpleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const amount = parseFloat(simpleData.amount);
+    const pnl = simpleData.result === "win" ? amount : -amount;
+    
+    // For simple mode, we'll use dummy values for entry/exit
+    const entryPrice = 100;
+    const exitPrice = simpleData.result === "win" ? entryPrice + amount : entryPrice - amount;
+
+    const { error } = await supabase.from("trades").insert({
+      user_id: userId,
+      asset_pair: simpleData.asset_pair,
+      trade_type: "long",
+      entry_price: entryPrice,
+      exit_price: exitPrice,
+      quantity: 1,
+      fees: 0,
+      exchange: simpleData.exchange || null,
+      notes: null,
+      strategy_tag: simpleData.strategy_tag || null,
+      status: "closed",
+      pnl: pnl,
+    });
+
+    if (error) {
+      toast.error("Failed to add trade: " + error.message);
+    } else {
+      toast.success("Trade added successfully!");
+      onOpenChange(false);
+      setSimpleData({
+        asset_pair: "",
+        result: "win",
+        amount: "",
+        exchange: "",
+        strategy_tag: "",
+      });
+    }
+
+    setLoading(false);
+  };
+
+  const handleAdvancedSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -90,7 +146,88 @@ const AddTradeDialog = ({ open, onOpenChange, userId }: AddTradeDialogProps) => 
         <DialogHeader>
           <DialogTitle>Add New Trade</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        
+        <Tabs value={mode} onValueChange={(v) => setMode(v as "simple" | "advanced")}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="simple">Quick Add</TabsTrigger>
+            <TabsTrigger value="advanced">Advanced</TabsTrigger>
+          </TabsList>
+
+          {/* Simple Mode */}
+          <TabsContent value="simple">
+            <form onSubmit={handleSimpleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="simple-asset">Asset Pair *</Label>
+                <Input
+                  id="simple-asset"
+                  placeholder="BTC/USDT"
+                  value={simpleData.asset_pair}
+                  onChange={(e) => setSimpleData({ ...simpleData, asset_pair: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="result">Result *</Label>
+                <Select
+                  value={simpleData.result}
+                  onValueChange={(value: "win" | "loss") =>
+                    setSimpleData({ ...simpleData, result: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="win">Win ✓</SelectItem>
+                    <SelectItem value="loss">Loss ✗</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="amount">Amount ($) *</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  placeholder="100.00"
+                  value={simpleData.amount}
+                  onChange={(e) => setSimpleData({ ...simpleData, amount: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="simple-exchange">Exchange</Label>
+                  <Input
+                    id="simple-exchange"
+                    placeholder="Binance, Coinbase..."
+                    value={simpleData.exchange}
+                    onChange={(e) => setSimpleData({ ...simpleData, exchange: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="simple-strategy">Strategy</Label>
+                  <Input
+                    id="simple-strategy"
+                    placeholder="Scalping, Swing..."
+                    value={simpleData.strategy_tag}
+                    onChange={(e) => setSimpleData({ ...simpleData, strategy_tag: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Adding Trade..." : "Add Trade"}
+              </Button>
+            </form>
+          </TabsContent>
+
+          {/* Advanced Mode */}
+          <TabsContent value="advanced">
+            <form onSubmit={handleAdvancedSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="asset_pair">Asset Pair *</Label>
@@ -222,10 +359,12 @@ const AddTradeDialog = ({ open, onOpenChange, userId }: AddTradeDialogProps) => 
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Adding Trade..." : "Add Trade"}
-          </Button>
-        </form>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Adding Trade..." : "Add Trade"}
+              </Button>
+            </form>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
