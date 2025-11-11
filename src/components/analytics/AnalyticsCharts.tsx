@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
+import ExportPDF from "./ExportPDF";
 
 interface AnalyticsChartsProps {
   userId: string;
@@ -13,6 +14,7 @@ const AnalyticsCharts = ({ userId }: AnalyticsChartsProps) => {
   const [strategyPerformance, setStrategyPerformance] = useState<any[]>([]);
   const [exchangePerformance, setExchangePerformance] = useState<any[]>([]);
   const [winLossData, setWinLossData] = useState<any[]>([]);
+  const [trades, setTrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,6 +31,8 @@ const AnalyticsCharts = ({ userId }: AnalyticsChartsProps) => {
         setLoading(false);
         return;
       }
+
+      setTrades(trades || []);
 
       // Equity Curve - cumulative P&L over time
       let cumulativePnL = 0;
@@ -116,6 +120,11 @@ const AnalyticsCharts = ({ userId }: AnalyticsChartsProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Export PDF Button */}
+      <div className="flex justify-end">
+        <ExportPDF userId={userId} trades={trades} />
+      </div>
+
       {/* Insights */}
       {strategyPerformance.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -124,9 +133,9 @@ const AnalyticsCharts = ({ userId }: AnalyticsChartsProps) => {
               <CardTitle className="text-base text-success">Best Strategy</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{strategyPerformance.sort((a, b) => b.pnl - a.pnl)[0]?.name}</div>
+              <div className="text-2xl font-bold">{[...strategyPerformance].sort((a, b) => b.pnl - a.pnl)[0]?.name}</div>
               <div className="text-sm text-muted-foreground">
-                +${strategyPerformance.sort((a, b) => b.pnl - a.pnl)[0]?.pnl} profit
+                +${[...strategyPerformance].sort((a, b) => b.pnl - a.pnl)[0]?.pnl} profit
               </div>
             </CardContent>
           </Card>
@@ -136,9 +145,9 @@ const AnalyticsCharts = ({ userId }: AnalyticsChartsProps) => {
               <CardTitle className="text-base text-destructive">Worst Strategy</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{strategyPerformance.sort((a, b) => a.pnl - b.pnl)[0]?.name}</div>
+              <div className="text-2xl font-bold">{[...strategyPerformance].sort((a, b) => a.pnl - b.pnl)[0]?.name}</div>
               <div className="text-sm text-muted-foreground">
-                ${strategyPerformance.sort((a, b) => a.pnl - b.pnl)[0]?.pnl} loss
+                ${[...strategyPerformance].sort((a, b) => a.pnl - b.pnl)[0]?.pnl} loss
               </div>
             </CardContent>
           </Card>

@@ -16,6 +16,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"overview" | "trades" | "portfolio">("overview");
   const [showAddTrade, setShowAddTrade] = useState(false);
+  const [editingTrade, setEditingTrade] = useState<any>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -41,6 +42,18 @@ const Dashboard = () => {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     toast.success("Signed out successfully");
+  };
+
+  const handleEditTrade = (trade: any) => {
+    setEditingTrade(trade);
+    setShowAddTrade(true);
+  };
+
+  const handleCloseDialog = (open: boolean) => {
+    setShowAddTrade(open);
+    if (!open) {
+      setEditingTrade(null);
+    }
   };
 
   if (loading) {
@@ -140,7 +153,7 @@ const Dashboard = () => {
                 Add Trade
               </Button>
             </div>
-            <TradesList userId={user?.id} />
+            <TradesList userId={user?.id} onEditTrade={handleEditTrade} />
           </div>
         )}
 
@@ -154,8 +167,9 @@ const Dashboard = () => {
 
       <AddTradeDialog
         open={showAddTrade}
-        onOpenChange={setShowAddTrade}
+        onOpenChange={handleCloseDialog}
         userId={user?.id}
+        editTrade={editingTrade}
       />
     </div>
   );

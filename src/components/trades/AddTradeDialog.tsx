@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,13 +8,29 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface Trade {
+  id: string;
+  asset_pair: string;
+  trade_type: string;
+  entry_price: number;
+  exit_price: number | null;
+  quantity: number;
+  pnl: number | null;
+  status: string;
+  trade_date: string;
+  strategy_tag: string | null;
+  exchange: string | null;
+  notes: string | null;
+}
+
 interface AddTradeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userId: string;
+  editTrade?: Trade | null;
 }
 
-const AddTradeDialog = ({ open, onOpenChange, userId }: AddTradeDialogProps) => {
+const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialogProps) => {
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -25,6 +41,30 @@ const AddTradeDialog = ({ open, onOpenChange, userId }: AddTradeDialogProps) => 
     strategy_tag: "",
     notes: "",
   });
+
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (editTrade) {
+      const pnl = editTrade.pnl || 0;
+      setFormData({
+        asset_pair: editTrade.asset_pair,
+        position: editTrade.trade_type as "long" | "short",
+        result: pnl >= 0 ? "win" : "loss",
+        amount: Math.abs(pnl).toString(),
+        strategy_tag: editTrade.strategy_tag || "",
+        notes: editTrade.notes || "",
+      });
+    } else {
+      setFormData({
+        asset_pair: "",
+        position: "long",
+        result: "win",
+        amount: "",
+        strategy_tag: "",
+        notes: "",
+      });
+    }
+  }, [editTrade, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +77,7 @@ const AddTradeDialog = ({ open, onOpenChange, userId }: AddTradeDialogProps) => 
     const entryPrice = 100;
     const exitPrice = formData.result === "win" ? entryPrice + amount : entryPrice - amount;
 
-    const { error } = await supabase.from("trades").insert({
+    const tradeData = {
       user_id: userId,
       asset_pair: formData.asset_pair,
       trade_type: formData.position,
@@ -50,12 +90,26 @@ const AddTradeDialog = ({ open, onOpenChange, userId }: AddTradeDialogProps) => 
       strategy_tag: formData.strategy_tag || null,
       status: "closed",
       pnl: pnl,
-    });
+    };
+
+    let error;
+    if (editTrade) {
+      // Update existing trade
+      const { error: updateError } = await supabase
+        .from("trades")
+        .update(tradeData)
+        .eq("id", editTrade.id);
+      error = updateError;
+    } else {
+      // Insert new trade
+      const { error: insertError } = await supabase.from("trades").insert(tradeData);
+      error = insertError;
+    }
 
     if (error) {
-      toast.error("Failed to add trade: " + error.message);
+      toast.error(`Failed to ${editTrade ? "update" : "add"} trade: ` + error.message);
     } else {
-      toast.success("Trade added successfully!");
+      toast.success(`Trade ${editTrade ? "updated" : "added"} successfully!`);
       onOpenChange(false);
       setFormData({
         asset_pair: "",
@@ -74,7 +128,7 @@ const AddTradeDialog = ({ open, onOpenChange, userId }: AddTradeDialogProps) => 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Trade</DialogTitle>
+          <DialogTitle>{editTrade ? "Edit Trade" : "Add New Trade"}</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -160,7 +214,7 @@ const AddTradeDialog = ({ open, onOpenChange, userId }: AddTradeDialogProps) => 
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Adding Trade..." : "Add Trade"}
+            {loading ? (editTrade ? "Updating..." : "Adding...") : (editTrade ? "Update Trade" : "Add Trade")}
           </Button>
         </form>
       </DialogContent>
