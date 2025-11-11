@@ -58,6 +58,27 @@ const AnalyticsCharts = ({ userId }: AnalyticsChartsProps) => {
     };
 
     fetchAnalytics();
+
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel('analytics-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'trades',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          fetchAnalytics();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   if (loading) {

@@ -46,6 +46,27 @@ const DashboardStats = ({ userId }: StatsProps) => {
     };
 
     fetchStats();
+
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel('dashboard-stats-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'trades',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          fetchStats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   if (loading) {

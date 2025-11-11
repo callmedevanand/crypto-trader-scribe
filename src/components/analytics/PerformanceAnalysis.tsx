@@ -22,31 +22,41 @@ const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
   const getFilteredTrades = () => {
     const now = new Date();
     let startDate: Date;
+    let endDate: Date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
     switch (period) {
       case "daily":
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
         break;
       case "weekly":
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        startDate.setHours(0, 0, 0, 0);
         break;
       case "monthly":
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
         break;
       case "yearly":
-        startDate = new Date(now.getFullYear(), 0, 1);
+        startDate = new Date(now.getFullYear(), 0, 1, 0, 0, 0);
         break;
       case "custom":
-        if (!customStartDate || !customEndDate) return trades;
+        if (!customStartDate || !customEndDate) return [];
+        const customStart = new Date(customStartDate);
+        customStart.setHours(0, 0, 0, 0);
+        const customEnd = new Date(customEndDate);
+        customEnd.setHours(23, 59, 59, 999);
         return trades.filter(trade => {
           const tradeDate = new Date(trade.trade_date);
-          return tradeDate >= customStartDate && tradeDate <= customEndDate;
+          return tradeDate >= customStart && tradeDate <= customEnd;
         });
       default:
         return trades;
     }
 
-    return trades.filter(trade => new Date(trade.trade_date) >= startDate);
+    return trades.filter(trade => {
+      const tradeDate = new Date(trade.trade_date);
+      return tradeDate >= startDate && tradeDate <= endDate;
+    });
   };
 
   const filteredTrades = getFilteredTrades();
@@ -60,6 +70,10 @@ const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
 
   // Generate equity curve data
   const getEquityCurve = () => {
+    if (filteredTrades.length === 0) {
+      return [{ date: "No data", pnl: 0 }];
+    }
+
     let cumulativePnL = 0;
     const sortedTrades = [...filteredTrades].sort((a, b) => 
       new Date(a.trade_date).getTime() - new Date(b.trade_date).getTime()
@@ -67,26 +81,37 @@ const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
 
     if (period === "daily") {
       // Group by hour for daily view
-      const hourlyData: { [key: string]: number } = {};
+      const hourlyData: { hour: number; pnl: number }[] = [];
+      const hourMap: { [key: number]: number } = {};
+      
       sortedTrades.forEach(trade => {
         const date = new Date(trade.trade_date);
-        const hourKey = `${date.getHours()}:00`;
-        hourlyData[hourKey] = (hourlyData[hourKey] || 0) + (Number(trade.pnl) || 0);
+        const hour = date.getHours();
+        hourMap[hour] = (hourMap[hour] || 0) + (Number(trade.pnl) || 0);
       });
 
-      return Object.entries(hourlyData).map(([hour, pnl]) => {
-        cumulativePnL += pnl;
-        return {
-          date: hour,
+      // Sort hours and create cumulative data
+      const sortedHours = Object.keys(hourMap).map(Number).sort((a, b) => a - b);
+      sortedHours.forEach(hour => {
+        cumulativePnL += hourMap[hour];
+        hourlyData.push({
+          hour,
           pnl: Number(cumulativePnL.toFixed(2)),
-        };
+        });
       });
+
+      return hourlyData.map(data => ({
+        date: `${data.hour.toString().padStart(2, '0')}:00`,
+        pnl: data.pnl,
+      }));
     }
 
-    return sortedTrades.map(trade => {
+    // For other periods, show cumulative by trade
+    return sortedTrades.map((trade, index) => {
       cumulativePnL += Number(trade.pnl || 0);
+      const dateFormat = period === "yearly" ? "MMM yyyy" : period === "monthly" ? "MMM dd" : "MMM dd HH:mm";
       return {
-        date: format(new Date(trade.trade_date), "MMM dd"),
+        date: format(new Date(trade.trade_date), dateFormat),
         pnl: Number(cumulativePnL.toFixed(2)),
       };
     });
@@ -94,11 +119,11 @@ const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
 
   const equityCurve = getEquityCurve();
 
-  // Win/Loss distribution data
+  // Win/Loss distribution data - filter out zero values
   const winLossData = [
     { name: "Wins", value: wins, color: "hsl(var(--success))" },
     { name: "Losses", value: losses, color: "hsl(var(--destructive))" },
-  ];
+  ].filter(item => item.value > 0);
 
   return (
     <Card>
@@ -224,13 +249,17 @@ const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Best Trade</p>
             <p className="text-2xl font-bold text-success">
-              ${Math.max(...filteredTrades.map(t => Number(t.pnl) || 0), 0).toFixed(2)}
+              ${filteredTrades.length > 0 ? Math.max(...filteredTrades.map(t => Number(t.pnl) || 0), 0).toFixed(2) : "0.00"}
             </p>
           </div>
         </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {filteredTrades.length === 0 ? (
+          <div className="mt-6 text-center py-12 text-muted-foreground">
+            No trades found for the selected period
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           {/* Equity Curve */}
           <div>
             <h3 className="text-lg font-semibold mb-4">
@@ -262,33 +291,40 @@ const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
           {/* Win/Loss Distribution */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Win/Loss Distribution</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={winLossData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {winLossData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            {winLossData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={winLossData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, value }) => `${name}: ${value}`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {winLossData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+                No trades to display
+              </div>
+            )}
           </div>
         </div>
+        )}
       </CardContent>
     </Card>
   );

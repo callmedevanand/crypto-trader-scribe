@@ -18,6 +18,27 @@ const CalendarView = ({ userId }: CalendarViewProps) => {
 
   useEffect(() => {
     fetchTrades();
+
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel('calendar-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'trades',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          fetchTrades();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId, currentDate, view]);
 
   const fetchTrades = async () => {
