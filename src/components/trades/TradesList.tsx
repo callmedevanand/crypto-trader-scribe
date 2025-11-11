@@ -105,11 +105,11 @@ const TradesList = ({ userId, onEditTrade }: TradesListProps) => {
   };
 
   if (loading) {
-    return <div className="space-y-4">
+    return <div className="space-y-3 md:space-y-4">
       {[1, 2, 3].map((i) => (
         <Card key={i} className="animate-pulse">
           <CardHeader>
-            <div className="h-6 bg-muted rounded w-48"></div>
+            <div className="h-5 md:h-6 bg-muted rounded w-32 md:w-48"></div>
           </CardHeader>
           <CardContent>
             <div className="h-4 bg-muted rounded w-full"></div>
@@ -123,7 +123,7 @@ const TradesList = ({ userId, onEditTrade }: TradesListProps) => {
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">No trades yet. Add your first trade to get started!</p>
+          <p className="text-sm md:text-base text-muted-foreground">No trades yet. Add your first trade to get started!</p>
         </CardContent>
       </Card>
     );
@@ -131,23 +131,23 @@ const TradesList = ({ userId, onEditTrade }: TradesListProps) => {
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="space-y-3 md:space-y-4">
         {trades.map((trade) => (
-          <Card key={trade.id} className="hover:border-primary/50 transition-colors">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  {trade.asset_pair}
-                  <Badge variant={trade.trade_type === "long" ? "default" : "secondary"}>
-                    {trade.trade_type}
+          <Card key={trade.id} className="hover:border-primary/50 transition-all duration-200 hover:shadow-md">
+            <CardHeader className="pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <CardTitle className="text-base md:text-lg font-semibold flex flex-wrap items-center gap-2">
+                  <span className="text-primary">{trade.asset_pair}</span>
+                  <Badge variant={trade.trade_type === "long" ? "default" : "secondary"} className="text-xs">
+                    {trade.trade_type.toUpperCase()}
                   </Badge>
-                  <Badge variant={trade.status === "closed" ? "outline" : "default"}>
+                  <Badge variant={trade.status === "closed" ? "outline" : "default"} className="text-xs">
                     {trade.status}
                   </Badge>
                 </CardTitle>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between sm:justify-end gap-2">
                   {trade.pnl !== null && (
-                    <span className={`text-lg font-bold ${trade.pnl >= 0 ? "text-success" : "text-destructive"}`}>
+                    <span className={`text-lg md:text-xl font-bold ${trade.pnl >= 0 ? "text-success" : "text-destructive"}`}>
                       {trade.pnl >= 0 ? "+" : ""}${Number(trade.pnl).toFixed(2)}
                     </span>
                   )}
@@ -157,6 +157,7 @@ const TradesList = ({ userId, onEditTrade }: TradesListProps) => {
                         variant="ghost"
                         size="icon"
                         onClick={() => onEditTrade(trade)}
+                        className="h-8 w-8"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -165,6 +166,7 @@ const TradesList = ({ userId, onEditTrade }: TradesListProps) => {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDeleteClick(trade.id)}
+                      className="h-8 w-8"
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -172,8 +174,8 @@ const TradesList = ({ userId, onEditTrade }: TradesListProps) => {
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <CardContent className="pt-0">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-xs md:text-sm">
                 <div>
                   <span className="text-muted-foreground">Entry:</span>
                   <div className="font-medium">${Number(trade.entry_price).toFixed(2)}</div>
@@ -192,12 +194,6 @@ const TradesList = ({ userId, onEditTrade }: TradesListProps) => {
                   <span className="text-muted-foreground">Date:</span>
                   <div className="font-medium">{format(new Date(trade.trade_date), "MMM dd, yyyy")}</div>
                 </div>
-                {trade.exchange && (
-                  <div>
-                    <span className="text-muted-foreground">Exchange:</span>
-                    <div className="font-medium">{trade.exchange}</div>
-                  </div>
-                )}
                 {trade.strategy_tag && (
                   <div className="col-span-2">
                     <span className="text-muted-foreground">Strategy:</span>
@@ -207,14 +203,15 @@ const TradesList = ({ userId, onEditTrade }: TradesListProps) => {
               </div>
               
               {(trade.notes || trade.image_url) && (
-                <div className="mt-4 flex gap-2">
+                <div className="mt-4 flex flex-wrap gap-2">
                   {trade.notes && (
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => showDetails(trade)}
+                      className="text-xs"
                     >
-                      <FileText className="h-4 w-4 mr-2" />
+                      <FileText className="h-3 w-3 md:h-4 md:w-4 mr-2" />
                       View Notes
                     </Button>
                   )}
@@ -223,8 +220,9 @@ const TradesList = ({ userId, onEditTrade }: TradesListProps) => {
                       variant="outline"
                       size="sm"
                       onClick={() => showDetails(trade)}
+                      className="text-xs"
                     >
-                      <Image className="h-4 w-4 mr-2" />
+                      <Image className="h-3 w-3 md:h-4 md:w-4 mr-2" />
                       View Screenshot
                     </Button>
                   )}

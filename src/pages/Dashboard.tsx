@@ -71,19 +71,19 @@ const Dashboard = () => {
     <div className="min-h-screen">
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-3 md:px-4 py-3 md:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-6 w-6 text-primary" />
-              <h1 className="text-xl font-bold">CryptoJournal</h1>
+              <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+              <h1 className="text-lg md:text-xl font-bold">CryptoJournal</h1>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground hidden sm:inline">
+              <span className="text-xs md:text-sm text-muted-foreground hidden sm:inline truncate max-w-[120px] md:max-w-none">
                 {user?.email}
               </span>
               <Button variant="outline" size="sm" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
+                <LogOut className="h-4 w-4 md:mr-2" />
+                <span className="hidden md:inline">Sign Out</span>
               </Button>
             </div>
           </div>
@@ -91,54 +91,57 @@ const Dashboard = () => {
       </header>
 
       {/* Navigation */}
-      <div className="border-b border-border">
-        <div className="container mx-auto px-4">
-          <nav className="flex gap-1">
+      <div className="border-b border-border bg-card/30">
+        <div className="container mx-auto px-2 md:px-4">
+          <nav className="flex gap-0.5 md:gap-1 overflow-x-auto">
             <Button
               variant={activeTab === "overview" ? "secondary" : "ghost"}
-              className="rounded-none border-b-2 border-transparent data-[active=true]:border-primary"
+              className="rounded-none border-b-2 border-transparent data-[active=true]:border-primary whitespace-nowrap text-xs md:text-sm px-3 md:px-4"
               data-active={activeTab === "overview"}
               onClick={() => setActiveTab("overview")}
+              size="sm"
             >
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Overview
+              <BarChart3 className="h-3 w-3 md:h-4 md:w-4 md:mr-2" />
+              <span className="hidden sm:inline">Overview</span>
             </Button>
             <Button
               variant={activeTab === "trades" ? "secondary" : "ghost"}
-              className="rounded-none border-b-2 border-transparent data-[active=true]:border-primary"
+              className="rounded-none border-b-2 border-transparent data-[active=true]:border-primary whitespace-nowrap text-xs md:text-sm px-3 md:px-4"
               data-active={activeTab === "trades"}
               onClick={() => setActiveTab("trades")}
+              size="sm"
             >
-              <FileText className="h-4 w-4 mr-2" />
-              Trades
+              <FileText className="h-3 w-3 md:h-4 md:w-4 md:mr-2" />
+              <span className="hidden sm:inline">Trades</span>
             </Button>
             <Button
               variant={activeTab === "calendar" ? "secondary" : "ghost"}
-              className="rounded-none border-b-2 border-transparent data-[active=true]:border-primary"
+              className="rounded-none border-b-2 border-transparent data-[active=true]:border-primary whitespace-nowrap text-xs md:text-sm px-3 md:px-4"
               data-active={activeTab === "calendar"}
               onClick={() => setActiveTab("calendar")}
+              size="sm"
             >
-              <Calendar className="h-4 w-4 mr-2" />
-              Calendar
+              <Calendar className="h-3 w-3 md:h-4 md:w-4 md:mr-2" />
+              <span className="hidden sm:inline">Calendar</span>
             </Button>
           </nav>
         </div>
       </div>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 md:px-4 py-4 md:py-8">
         {activeTab === "overview" && (
-          <div className="space-y-8">
-            <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-bold">Dashboard Overview</h2>
-              <Button onClick={() => setShowAddTrade(true)}>
+          <div className="space-y-6 md:space-y-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <h2 className="text-2xl md:text-3xl font-bold">Dashboard Overview</h2>
+              <Button onClick={() => setShowAddTrade(true)} size="sm" className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Trade
               </Button>
             </div>
             <DashboardStats userId={user?.id} />
             <div>
-              <h3 className="text-2xl font-bold mb-4">Performance Analytics</h3>
+              <h3 className="text-xl md:text-2xl font-bold mb-4">Performance Analytics</h3>
               <AnalyticsCharts userId={user?.id} />
             </div>
           </div>
@@ -146,9 +149,9 @@ const Dashboard = () => {
 
         {activeTab === "trades" && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-bold">Trade Journal</h2>
-              <Button onClick={() => setShowAddTrade(true)}>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <h2 className="text-2xl md:text-3xl font-bold">Trade Journal</h2>
+              <Button onClick={() => setShowAddTrade(true)} size="sm" className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Trade
               </Button>
@@ -159,7 +162,7 @@ const Dashboard = () => {
 
         {activeTab === "calendar" && (
           <div className="space-y-4">
-            <h2 className="text-3xl font-bold">Trading Calendar</h2>
+            <h2 className="text-2xl md:text-3xl font-bold">Trading Calendar</h2>
             <CalendarView userId={user?.id} />
           </div>
         )}

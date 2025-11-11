@@ -180,32 +180,33 @@ const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto mx-4">
         <DialogHeader>
-          <DialogTitle>{editTrade ? "Edit Trade" : "Add New Trade"}</DialogTitle>
+          <DialogTitle className="text-lg md:text-xl">{editTrade ? "Edit Trade" : "Add New Trade"}</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="asset_pair">Asset Pair *</Label>
+            <Label htmlFor="asset_pair" className="text-sm">Asset Pair *</Label>
             <Input
               id="asset_pair"
               placeholder="BTC/USDT"
               value={formData.asset_pair}
               onChange={(e) => setFormData({ ...formData, asset_pair: e.target.value })}
               required
+              className="text-base"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="position">Position *</Label>
+            <Label htmlFor="position" className="text-sm">Position *</Label>
             <Select
               value={formData.position}
               onValueChange={(value: "long" | "short") =>
                 setFormData({ ...formData, position: value })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="text-base">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -216,14 +217,14 @@ const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialo
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="result">Result *</Label>
+            <Label htmlFor="result" className="text-sm">Result *</Label>
             <Select
               value={formData.result}
               onValueChange={(value: "win" | "loss") =>
                 setFormData({ ...formData, result: value })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="text-base">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -234,7 +235,7 @@ const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialo
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount ($) *</Label>
+            <Label htmlFor="amount" className="text-sm">Amount ($) *</Label>
             <Input
               id="amount"
               type="number"
@@ -243,51 +244,54 @@ const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialo
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
               required
+              className="text-base"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="strategy_tag">Strategy</Label>
+            <Label htmlFor="strategy_tag" className="text-sm">Strategy</Label>
             <Input
               id="strategy_tag"
               placeholder="Scalping, Swing..."
               value={formData.strategy_tag}
               onChange={(e) => setFormData({ ...formData, strategy_tag: e.target.value })}
+              className="text-base"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes (Optional)</Label>
+            <Label htmlFor="notes" className="text-sm">Notes (Optional)</Label>
             <Textarea
               id="notes"
               placeholder="Detailed trade analysis, market conditions, lessons learned..."
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={4}
+              className="text-base resize-none"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="image">Screenshot/Image (Optional)</Label>
+            <Label htmlFor="image" className="text-sm">Screenshot/Image (Optional)</Label>
             {imagePreview ? (
               <div className="relative">
                 <img
                   src={imagePreview}
                   alt="Trade screenshot"
-                  className="w-full h-48 object-cover rounded-lg"
+                  className="w-full h-48 object-cover rounded-lg border border-border"
                 />
                 <Button
                   type="button"
                   variant="destructive"
                   size="icon"
-                  className="absolute top-2 right-2"
+                  className="absolute top-2 right-2 h-8 w-8"
                   onClick={removeImage}
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             ) : (
-              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
                 <input
                   id="image"
                   type="file"
@@ -311,7 +315,7 @@ const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialo
             )}
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" disabled={loading} size="lg">
             {loading ? (editTrade ? "Updating..." : "Adding...") : (editTrade ? "Update Trade" : "Add Trade")}
           </Button>
         </form>

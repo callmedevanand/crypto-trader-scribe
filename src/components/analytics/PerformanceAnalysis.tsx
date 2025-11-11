@@ -12,7 +12,7 @@ interface PerformanceAnalysisProps {
   trades: Trade[];
 }
 
-type TimePeriod = "daily" | "weekly" | "monthly" | "yearly" | "custom";
+type TimePeriod = "weekly" | "monthly" | "yearly" | "custom";
 
 const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
   const [period, setPeriod] = useState<TimePeriod>("monthly");
@@ -25,10 +25,6 @@ const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
     let endDate: Date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
     switch (period) {
-      case "daily":
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-        break;
       case "weekly":
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         startDate.setHours(0, 0, 0, 0);
@@ -79,37 +75,9 @@ const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
       new Date(a.trade_date).getTime() - new Date(b.trade_date).getTime()
     );
 
-    if (period === "daily") {
-      // Group by hour for daily view
-      const hourlyData: { hour: number; pnl: number }[] = [];
-      const hourMap: { [key: number]: number } = {};
-      
-      sortedTrades.forEach(trade => {
-        const date = new Date(trade.trade_date);
-        const hour = date.getHours();
-        hourMap[hour] = (hourMap[hour] || 0) + (Number(trade.pnl) || 0);
-      });
-
-      // Sort hours and create cumulative data
-      const sortedHours = Object.keys(hourMap).map(Number).sort((a, b) => a - b);
-      sortedHours.forEach(hour => {
-        cumulativePnL += hourMap[hour];
-        hourlyData.push({
-          hour,
-          pnl: Number(cumulativePnL.toFixed(2)),
-        });
-      });
-
-      return hourlyData.map(data => ({
-        date: `${data.hour.toString().padStart(2, '0')}:00`,
-        pnl: data.pnl,
-      }));
-    }
-
-    // For other periods, show cumulative by trade
-    return sortedTrades.map((trade, index) => {
+    return sortedTrades.map((trade) => {
       cumulativePnL += Number(trade.pnl || 0);
-      const dateFormat = period === "yearly" ? "MMM yyyy" : period === "monthly" ? "MMM dd" : "MMM dd HH:mm";
+      const dateFormat = period === "yearly" ? "MMM yyyy" : period === "monthly" ? "MMM dd" : "MMM dd";
       return {
         date: format(new Date(trade.trade_date), dateFormat),
         pnl: Number(cumulativePnL.toFixed(2)),
@@ -130,13 +98,6 @@ const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
       <CardHeader>
         <CardTitle>Performance Analysis</CardTitle>
         <div className="flex flex-wrap gap-2 mt-4">
-          <Button
-            variant={period === "daily" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setPeriod("daily")}
-          >
-            Daily
-          </Button>
           <Button
             variant={period === "weekly" ? "default" : "outline"}
             size="sm"
@@ -206,49 +167,49 @@ const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
         )}
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Total P&L</p>
-            <p className={`text-2xl font-bold ${totalPnL >= 0 ? "text-success" : "text-destructive"}`}>
+            <p className="text-xs md:text-sm text-muted-foreground">Total P&L</p>
+            <p className={`text-lg md:text-2xl font-bold ${totalPnL >= 0 ? "text-success" : "text-destructive"}`}>
               {totalPnL >= 0 ? "+" : ""}${totalPnL.toFixed(2)}
             </p>
           </div>
 
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Win Rate</p>
-            <p className="text-2xl font-bold">{winRate}%</p>
+            <p className="text-xs md:text-sm text-muted-foreground">Win Rate</p>
+            <p className="text-lg md:text-2xl font-bold">{winRate}%</p>
           </div>
 
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Total Trades</p>
-            <p className="text-2xl font-bold">{filteredTrades.length}</p>
+            <p className="text-xs md:text-sm text-muted-foreground">Total Trades</p>
+            <p className="text-lg md:text-2xl font-bold">{filteredTrades.length}</p>
           </div>
 
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Wins / Losses</p>
-            <p className="text-2xl font-bold">
+            <p className="text-xs md:text-sm text-muted-foreground">Wins / Losses</p>
+            <p className="text-lg md:text-2xl font-bold">
               <span className="text-success">{wins}</span> / <span className="text-destructive">{losses}</span>
             </p>
           </div>
 
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Avg Win</p>
-            <p className="text-2xl font-bold text-success">${avgWin.toFixed(2)}</p>
+            <p className="text-xs md:text-sm text-muted-foreground">Avg Win</p>
+            <p className="text-lg md:text-2xl font-bold text-success">${avgWin.toFixed(2)}</p>
           </div>
 
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Avg Loss</p>
-            <p className="text-2xl font-bold text-destructive">${avgLoss.toFixed(2)}</p>
+            <p className="text-xs md:text-sm text-muted-foreground">Avg Loss</p>
+            <p className="text-lg md:text-2xl font-bold text-destructive">${avgLoss.toFixed(2)}</p>
           </div>
 
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Profit Factor</p>
-            <p className="text-2xl font-bold">{profitFactor.toFixed(2)}</p>
+            <p className="text-xs md:text-sm text-muted-foreground">Profit Factor</p>
+            <p className="text-lg md:text-2xl font-bold">{profitFactor.toFixed(2)}</p>
           </div>
 
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Best Trade</p>
-            <p className="text-2xl font-bold text-success">
+            <p className="text-xs md:text-sm text-muted-foreground">Best Trade</p>
+            <p className="text-lg md:text-2xl font-bold text-success">
               ${filteredTrades.length > 0 ? Math.max(...filteredTrades.map(t => Number(t.pnl) || 0), 0).toFixed(2) : "0.00"}
             </p>
           </div>
@@ -262,19 +223,25 @@ const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           {/* Equity Curve */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">
-              {period === "daily" ? "Hourly P&L" : "Equity Curve"}
-            </h3>
+            <h3 className="text-base md:text-lg font-semibold mb-4">Equity Curve</h3>
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={equityCurve}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
-                <YAxis stroke="hsl(var(--muted-foreground))" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="hsl(var(--muted-foreground))" 
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis 
+                  stroke="hsl(var(--muted-foreground))" 
+                  tick={{ fontSize: 12 }}
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px",
+                    fontSize: "12px",
                   }}
                 />
                 <Line
@@ -282,7 +249,7 @@ const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
                   dataKey="pnl"
                   stroke="hsl(var(--primary))"
                   strokeWidth={2}
-                  dot={{ fill: "hsl(var(--primary))" }}
+                  dot={{ fill: "hsl(var(--primary))", r: 3 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -290,7 +257,7 @@ const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
 
           {/* Win/Loss Distribution */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Win/Loss Distribution</h3>
+            <h3 className="text-base md:text-lg font-semibold mb-4">Win/Loss Distribution</h3>
             {winLossData.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
