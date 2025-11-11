@@ -1,14 +1,16 @@
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { FileDown } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
+import { RefObject } from "react";
+import { Trade } from "@/types/trade";
 
 interface ExportPDFProps {
   userId: string;
-  trades: any[];
-  chartsRef?: React.RefObject<HTMLDivElement>;
+  trades: Trade[];
+  chartsRef?: RefObject<HTMLDivElement> | null;
 }
 
 const ExportPDF = ({ trades, chartsRef }: ExportPDFProps) => {
@@ -83,7 +85,7 @@ const ExportPDF = ({ trades, chartsRef }: ExportPDFProps) => {
 
   return (
     <Button onClick={handleExport} variant="outline">
-      <Download className="h-4 w-4 mr-2" />
+      <FileDown className="h-4 w-4 mr-2" />
       Export PDF
     </Button>
   );

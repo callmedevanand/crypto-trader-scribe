@@ -1,22 +1,23 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, RefObject } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { format } from "date-fns";
 import ExportPDF from "./ExportPDF";
+import { Trade } from "@/types/trade";
 
 interface AnalyticsChartsProps {
   userId: string;
 }
 
 const AnalyticsCharts = ({ userId }: AnalyticsChartsProps) => {
-  const chartsRef = useRef<HTMLDivElement>(null);
+  const chartsRef: RefObject<HTMLDivElement> = useRef<HTMLDivElement>(null);
   const [equityCurve, setEquityCurve] = useState<any[]>([]);
   const [strategyPerformance, setStrategyPerformance] = useState<any[]>([]);
   const [exchangePerformance, setExchangePerformance] = useState<any[]>([]);
   const [winLossData, setWinLossData] = useState<any[]>([]);
-  const [trades, setTrades] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchAnalytics = async () => {

@@ -4,16 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from "date-fns";
+import { Trade } from "@/types/trade";
 
 interface CalendarViewProps {
   userId: string;
 }
 
 const CalendarView = ({ userId }: CalendarViewProps) => {
-  const [trades, setTrades] = useState<any[]>([]);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [view, setView] = useState<"month" | "week">("month");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     fetchTrades();
