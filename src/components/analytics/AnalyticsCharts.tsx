@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -10,6 +10,7 @@ interface AnalyticsChartsProps {
 }
 
 const AnalyticsCharts = ({ userId }: AnalyticsChartsProps) => {
+  const chartsRef = useRef<HTMLDivElement>(null);
   const [equityCurve, setEquityCurve] = useState<any[]>([]);
   const [strategyPerformance, setStrategyPerformance] = useState<any[]>([]);
   const [exchangePerformance, setExchangePerformance] = useState<any[]>([]);
@@ -122,7 +123,7 @@ const AnalyticsCharts = ({ userId }: AnalyticsChartsProps) => {
     <div className="space-y-6">
       {/* Export PDF Button */}
       <div className="flex justify-end">
-        <ExportPDF userId={userId} trades={trades} />
+        <ExportPDF userId={userId} trades={trades} chartsRef={chartsRef} />
       </div>
 
       {/* Insights */}
@@ -154,7 +155,7 @@ const AnalyticsCharts = ({ userId }: AnalyticsChartsProps) => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div ref={chartsRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Equity Curve */}
         <Card>
           <CardHeader>

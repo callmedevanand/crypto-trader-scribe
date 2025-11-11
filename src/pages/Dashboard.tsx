@@ -2,19 +2,20 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, LogOut, FileText, Wallet, BarChart3, Plus } from "lucide-react";
+import { TrendingUp, LogOut, FileText, Wallet, BarChart3, Plus, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import TradesList from "@/components/trades/TradesList";
 import AddTradeDialog from "@/components/trades/AddTradeDialog";
 import PortfolioView from "@/components/portfolio/PortfolioView";
 import AnalyticsCharts from "@/components/analytics/AnalyticsCharts";
+import CalendarView from "@/components/analytics/CalendarView";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "trades" | "portfolio">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "trades" | "portfolio" | "calendar">("overview");
   const [showAddTrade, setShowAddTrade] = useState(false);
   const [editingTrade, setEditingTrade] = useState<any>(null);
 
@@ -121,6 +122,15 @@ const Dashboard = () => {
               <Wallet className="h-4 w-4 mr-2" />
               Portfolio
             </Button>
+            <Button
+              variant={activeTab === "calendar" ? "secondary" : "ghost"}
+              className="rounded-none border-b-2 border-transparent data-[active=true]:border-primary"
+              data-active={activeTab === "calendar"}
+              onClick={() => setActiveTab("calendar")}
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Calendar
+            </Button>
           </nav>
         </div>
       </div>
@@ -161,6 +171,13 @@ const Dashboard = () => {
           <div className="space-y-4">
             <h2 className="text-3xl font-bold">Portfolio</h2>
             <PortfolioView userId={user?.id} />
+          </div>
+        )}
+
+        {activeTab === "calendar" && (
+          <div className="space-y-4">
+            <h2 className="text-3xl font-bold">Trading Calendar</h2>
+            <CalendarView userId={user?.id} />
           </div>
         )}
       </main>
