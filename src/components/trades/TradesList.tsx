@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, FileText, Image } from "lucide-react";
 import { toast } from "sonner";
+import { Trade } from "@/types/trade";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,20 +17,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-interface Trade {
-  id: string;
-  asset_pair: string;
-  trade_type: string;
-  entry_price: number;
-  exit_price: number | null;
-  quantity: number;
-  pnl: number | null;
-  status: string;
-  trade_date: string;
-  strategy_tag: string | null;
-  exchange: string | null;
-}
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface TradesListProps {
   userId: string;
@@ -41,6 +34,8 @@ const TradesList = ({ userId, onEditTrade }: TradesListProps) => {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [tradeToDelete, setTradeToDelete] = useState<string | null>(null);
+  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
   useEffect(() => {
     const fetchTrades = async () => {
@@ -102,6 +97,11 @@ const TradesList = ({ userId, onEditTrade }: TradesListProps) => {
 
     setDeleteDialogOpen(false);
     setTradeToDelete(null);
+  };
+
+  const showDetails = (trade: Trade) => {
+    setSelectedTrade(trade);
+    setShowDetailsDialog(true);
   };
 
   if (loading) {
@@ -205,10 +205,68 @@ const TradesList = ({ userId, onEditTrade }: TradesListProps) => {
                   </div>
                 )}
               </div>
+              
+              {(trade.notes || trade.image_url) && (
+                <div className="mt-4 flex gap-2">
+                  {trade.notes && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => showDetails(trade)}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      View Notes
+                    </Button>
+                  )}
+                  {trade.image_url && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => showDetails(trade)}
+                    >
+                      <Image className="h-4 w-4 mr-2" />
+                      View Screenshot
+                    </Button>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {/* Trade Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedTrade?.asset_pair} - Trade Details</DialogTitle>
+          </DialogHeader>
+          
+          {selectedTrade && (
+            <div className="space-y-4">
+              {selectedTrade.notes && (
+                <div>
+                  <h3 className="font-semibold mb-2">Notes:</h3>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap bg-muted p-4 rounded-lg">
+                    {selectedTrade.notes}
+                  </p>
+                </div>
+              )}
+              
+              {selectedTrade.image_url && (
+                <div>
+                  <h3 className="font-semibold mb-2">Screenshot:</h3>
+                  <img
+                    src={selectedTrade.image_url}
+                    alt="Trade screenshot"
+                    className="w-full rounded-lg border"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

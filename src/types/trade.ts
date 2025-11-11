@@ -13,6 +13,7 @@ export interface Trade {
   fees: number | null;
   trade_date: string;
   status: string;
+  image_url: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -82,6 +82,7 @@ export type Database = {
           exit_price: number | null
           fees: number | null
           id: string
+          image_url: string | null
           notes: string | null
           pnl: number | null
           quantity: number
@@ -100,6 +101,7 @@ export type Database = {
           exit_price?: number | null
           fees?: number | null
           id?: string
+          image_url?: string | null
           notes?: string | null
           pnl?: number | null
           quantity: number
@@ -118,6 +120,7 @@ export type Database = {
           exit_price?: number | null
           fees?: number | null
           id?: string
+          image_url?: string | null
           notes?: string | null
           pnl?: number | null
           quantity?: number

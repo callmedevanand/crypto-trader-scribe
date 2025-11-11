@@ -7,21 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-interface Trade {
-  id: string;
-  asset_pair: string;
-  trade_type: string;
-  entry_price: number;
-  exit_price: number | null;
-  quantity: number;
-  pnl: number | null;
-  status: string;
-  trade_date: string;
-  strategy_tag: string | null;
-  exchange: string | null;
-  notes: string | null;
-}
+import { ImagePlus, X } from "lucide-react";
+import { Trade } from "@/types/trade";
 
 interface AddTradeDialogProps {
   open: boolean;
@@ -32,6 +19,8 @@ interface AddTradeDialogProps {
 
 const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialogProps) => {
   const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     asset_pair: "",
@@ -54,6 +43,9 @@ const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialo
         strategy_tag: editTrade.strategy_tag || "",
         notes: editTrade.notes || "",
       });
+      if (editTrade.image_url) {
+        setImagePreview(editTrade.image_url);
+      }
     } else {
       setFormData({
         asset_pair: "",
@@ -63,12 +55,71 @@ const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialo
         strategy_tag: "",
         notes: "",
       });
+      setImageFile(null);
+      setImagePreview(null);
     }
   }, [editTrade, open]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size must be less than 5MB");
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!imageFile) return null;
+
+    const fileExt = imageFile.name.split(".").pop();
+    const fileName = `${userId}/${Date.now()}.${fileExt}`;
+
+    const { data, error } = await supabase.storage
+      .from("trade-images")
+      .upload(fileName, imageFile);
+
+    if (error) {
+      console.error("Error uploading image:", error);
+      toast.error("Failed to upload image");
+      return null;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("trade-images")
+      .getPublicUrl(data.path);
+
+    return urlData.publicUrl;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    let imageUrl = editTrade?.image_url || null;
+
+    // Upload new image if selected
+    if (imageFile) {
+      const uploadedUrl = await uploadImage();
+      if (uploadedUrl) {
+        imageUrl = uploadedUrl;
+      }
+    } else if (!imagePreview && editTrade?.image_url) {
+      // Image was removed
+      imageUrl = null;
+    }
 
     const amount = parseFloat(formData.amount);
     const pnl = formData.result === "win" ? amount : -amount;
@@ -90,6 +141,7 @@ const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialo
       strategy_tag: formData.strategy_tag || null,
       status: "closed",
       pnl: pnl,
+      image_url: imageUrl,
     };
 
     let error;
@@ -119,6 +171,8 @@ const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialo
         strategy_tag: "",
         notes: "",
       });
+      setImageFile(null);
+      setImagePreview(null);
     }
 
     setLoading(false);
@@ -203,14 +257,58 @@ const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialo
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">Notes (Optional)</Label>
             <Textarea
               id="notes"
-              placeholder="Trade notes..."
+              placeholder="Detailed trade analysis, market conditions, lessons learned..."
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows={3}
+              rows={4}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="image">Screenshot/Image (Optional)</Label>
+            {imagePreview ? (
+              <div className="relative">
+                <img
+                  src={imagePreview}
+                  alt="Trade screenshot"
+                  className="w-full h-48 object-cover rounded-lg"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2"
+                  onClick={removeImage}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                <input
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="image"
+                  className="cursor-pointer flex flex-col items-center gap-2"
+                >
+                  <ImagePlus className="h-8 w-8 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    Click to upload image
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Max 5MB
+                  </span>
+                </label>
+              </div>
+            )}
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>

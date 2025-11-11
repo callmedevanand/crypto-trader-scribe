@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { format, startOfDay, parseISO } from "date-fns";
 import { Trade } from "@/types/trade";
+import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface PerformanceAnalysisProps {
   trades: Trade[];
@@ -56,6 +57,48 @@ const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
   const avgWin = wins > 0 ? filteredTrades.filter(t => (t.pnl || 0) > 0).reduce((sum, t) => sum + Number(t.pnl), 0) / wins : 0;
   const avgLoss = losses > 0 ? filteredTrades.filter(t => (t.pnl || 0) < 0).reduce((sum, t) => sum + Number(t.pnl), 0) / losses : 0;
   const profitFactor = avgLoss !== 0 ? Math.abs(avgWin / avgLoss) : 0;
+
+  // Generate equity curve data
+  const getEquityCurve = () => {
+    let cumulativePnL = 0;
+    const sortedTrades = [...filteredTrades].sort((a, b) => 
+      new Date(a.trade_date).getTime() - new Date(b.trade_date).getTime()
+    );
+
+    if (period === "daily") {
+      // Group by hour for daily view
+      const hourlyData: { [key: string]: number } = {};
+      sortedTrades.forEach(trade => {
+        const date = new Date(trade.trade_date);
+        const hourKey = `${date.getHours()}:00`;
+        hourlyData[hourKey] = (hourlyData[hourKey] || 0) + (Number(trade.pnl) || 0);
+      });
+
+      return Object.entries(hourlyData).map(([hour, pnl]) => {
+        cumulativePnL += pnl;
+        return {
+          date: hour,
+          pnl: Number(cumulativePnL.toFixed(2)),
+        };
+      });
+    }
+
+    return sortedTrades.map(trade => {
+      cumulativePnL += Number(trade.pnl || 0);
+      return {
+        date: format(new Date(trade.trade_date), "MMM dd"),
+        pnl: Number(cumulativePnL.toFixed(2)),
+      };
+    });
+  };
+
+  const equityCurve = getEquityCurve();
+
+  // Win/Loss distribution data
+  const winLossData = [
+    { name: "Wins", value: wins, color: "hsl(var(--success))" },
+    { name: "Losses", value: losses, color: "hsl(var(--destructive))" },
+  ];
 
   return (
     <Card>
@@ -183,6 +226,67 @@ const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
             <p className="text-2xl font-bold text-success">
               ${Math.max(...filteredTrades.map(t => Number(t.pnl) || 0), 0).toFixed(2)}
             </p>
+          </div>
+        </div>
+
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          {/* Equity Curve */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4">
+              {period === "daily" ? "Hourly P&L" : "Equity Curve"}
+            </h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={equityCurve}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
+                <YAxis stroke="hsl(var(--muted-foreground))" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="pnl"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  dot={{ fill: "hsl(var(--primary))" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Win/Loss Distribution */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Win/Loss Distribution</h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={winLossData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value }) => `${name}: ${value}`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {winLossData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </CardContent>
