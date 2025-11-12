@@ -12,47 +12,31 @@ interface PerformanceAnalysisProps {
   trades: Trade[];
 }
 
-type TimePeriod = "weekly" | "monthly" | "yearly" | "custom";
+type TimePeriod = "total" | "custom";
 
 const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
-  const [period, setPeriod] = useState<TimePeriod>("monthly");
+  const [period, setPeriod] = useState<TimePeriod>("total");
   const [customStartDate, setCustomStartDate] = useState<Date>();
   const [customEndDate, setCustomEndDate] = useState<Date>();
 
   const getFilteredTrades = () => {
-    const now = new Date();
-    let startDate: Date;
-    let endDate: Date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-
-    switch (period) {
-      case "weekly":
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        startDate.setHours(0, 0, 0, 0);
-        break;
-      case "monthly":
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
-        break;
-      case "yearly":
-        startDate = new Date(now.getFullYear(), 0, 1, 0, 0, 0);
-        break;
-      case "custom":
-        if (!customStartDate || !customEndDate) return [];
-        const customStart = new Date(customStartDate);
-        customStart.setHours(0, 0, 0, 0);
-        const customEnd = new Date(customEndDate);
-        customEnd.setHours(23, 59, 59, 999);
-        return trades.filter(trade => {
-          const tradeDate = new Date(trade.trade_date);
-          return tradeDate >= customStart && tradeDate <= customEnd;
-        });
-      default:
-        return trades;
+    if (period === "total") {
+      return trades;
     }
 
-    return trades.filter(trade => {
-      const tradeDate = new Date(trade.trade_date);
-      return tradeDate >= startDate && tradeDate <= endDate;
-    });
+    if (period === "custom") {
+      if (!customStartDate || !customEndDate) return [];
+      const customStart = new Date(customStartDate);
+      customStart.setHours(0, 0, 0, 0);
+      const customEnd = new Date(customEndDate);
+      customEnd.setHours(23, 59, 59, 999);
+      return trades.filter(trade => {
+        const tradeDate = new Date(trade.trade_date);
+        return tradeDate >= customStart && tradeDate <= customEnd;
+      });
+    }
+
+    return trades;
   };
 
   const filteredTrades = getFilteredTrades();
@@ -77,7 +61,7 @@ const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
 
     return sortedTrades.map((trade) => {
       cumulativePnL += Number(trade.pnl || 0);
-      const dateFormat = period === "yearly" ? "MMM yyyy" : period === "monthly" ? "MMM dd" : "MMM dd";
+      const dateFormat = "MMM dd";
       return {
         date: format(new Date(trade.trade_date), dateFormat),
         pnl: Number(cumulativePnL.toFixed(2)),
@@ -99,25 +83,11 @@ const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
         <CardTitle>Performance Analysis</CardTitle>
         <div className="flex flex-wrap gap-2 mt-4">
           <Button
-            variant={period === "weekly" ? "default" : "outline"}
+            variant={period === "total" ? "default" : "outline"}
             size="sm"
-            onClick={() => setPeriod("weekly")}
+            onClick={() => setPeriod("total")}
           >
-            Weekly
-          </Button>
-          <Button
-            variant={period === "monthly" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setPeriod("monthly")}
-          >
-            Monthly
-          </Button>
-          <Button
-            variant={period === "yearly" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setPeriod("yearly")}
-          >
-            Yearly
+            Total
           </Button>
           <Button
             variant={period === "custom" ? "default" : "outline"}
