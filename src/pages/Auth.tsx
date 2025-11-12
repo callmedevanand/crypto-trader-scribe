@@ -75,7 +75,7 @@ const Auth = () => {
         <div className="flex flex-col items-center text-center space-y-2">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">CryptoJournal</h1>
+            <h1 className="text-3xl font-bold">CRX J</h1>
           </div>
           <p className="text-muted-foreground">Track your trades, master your strategy</p>
         </div>

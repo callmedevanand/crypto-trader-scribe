@@ -75,7 +75,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-              <h1 className="text-lg md:text-xl font-bold">CryptoJournal</h1>
+              <h1 className="text-lg md:text-xl font-bold">CRX J</h1>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs md:text-sm text-muted-foreground hidden sm:inline truncate max-w-[120px] md:max-w-none">
@@ -167,6 +167,30 @@ const Dashboard = () => {
           </div>
         )}
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border py-6 mt-8">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              <span className="font-semibold text-foreground">CRX J</span>
+            </div>
+            <p className="text-sm text-center">
+              Created by{" "}
+              <a
+                href="https://www.instagram.com/wolf_chain_x/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-primary hover:text-primary/80 transition-colors underline-offset-4 hover:underline"
+              >
+                Devanand M
+              </a>
+            </p>
+            <span className="text-xs">© 2025 All rights reserved</span>
+          </div>
+        </div>
+      </footer>
 
       <AddTradeDialog
         open={showAddTrade}

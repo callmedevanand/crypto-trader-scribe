@@ -3,17 +3,14 @@ import { FileDown } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import html2canvas from "html2canvas";
-import { RefObject } from "react";
 import { Trade } from "@/types/trade";
 
 interface ExportPDFProps {
   userId: string;
   trades: Trade[];
-  chartsRef?: RefObject<HTMLDivElement> | null;
 }
 
-const ExportPDF = ({ trades, chartsRef }: ExportPDFProps) => {
+const ExportPDF = ({ trades }: ExportPDFProps) => {
   const handleExport = async () => {
     try {
       const doc = new jsPDF();
@@ -53,26 +50,6 @@ const ExportPDF = ({ trades, chartsRef }: ExportPDFProps) => {
         headStyles: { fillColor: [59, 130, 246] },
         styles: { fontSize: 9 },
       });
-
-      // Add charts if reference is provided
-      if (chartsRef?.current) {
-        const charts = chartsRef.current;
-        const canvas = await html2canvas(charts, {
-          scale: 2,
-          backgroundColor: "#ffffff",
-          logging: false,
-        });
-        
-        const imgData = canvas.toDataURL("image/png");
-        const imgWidth = 190;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        
-        // Add new page for charts
-        doc.addPage();
-        doc.setFontSize(16);
-        doc.text("Performance Analytics", 14, 15);
-        doc.addImage(imgData, "PNG", 10, 25, imgWidth, imgHeight);
-      }
       
       // Save PDF
       doc.save(`trading-report-${new Date().toISOString().split('T')[0]}.pdf`);
