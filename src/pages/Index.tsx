@@ -23,7 +23,7 @@ const Index = () => {
           <div className="max-w-4xl mx-auto text-center space-y-8">
             <div className="inline-flex items-center gap-2 bg-card/50 backdrop-blur-sm px-4 py-2 rounded-full border border-primary/20">
               <TrendingUp className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium">Professional Crypto Trading Journal</span>
+              <span className="text-sm font-medium">CRX J - Professional Trading Journal</span>
             </div>
             
             <h1 className="text-5xl md:text-7xl font-bold leading-tight">
@@ -122,9 +122,23 @@ const Index = () => {
       {/* Footer */}
       <footer className="border-t border-border py-8">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center gap-2 text-muted-foreground">
-            <TrendingUp className="h-5 w-5" />
-            <span>CryptoJournal © 2025</span>
+          <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              <span className="font-semibold text-foreground">CRX J</span>
+            </div>
+            <p className="text-sm">
+              Created by{" "}
+              <a
+                href="https://www.instagram.com/wolf_chain_x/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-primary hover:text-primary/80 transition-colors underline-offset-4 hover:underline"
+              >
+                Devanand M
+              </a>
+            </p>
+            <span className="text-xs">© 2025 All rights reserved</span>
           </div>
         </div>
       </footer>
