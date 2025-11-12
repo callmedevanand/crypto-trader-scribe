@@ -10,36 +10,24 @@ import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tool
 
 interface PerformanceAnalysisProps {
   trades: Trade[];
+  period: "total" | "custom";
+  setPeriod: (period: "total" | "custom") => void;
+  customStartDate?: Date;
+  setCustomStartDate: (date?: Date) => void;
+  customEndDate?: Date;
+  setCustomEndDate: (date?: Date) => void;
+  filteredTrades: Trade[];
 }
 
-type TimePeriod = "total" | "custom";
-
-const PerformanceAnalysis = ({ trades }: PerformanceAnalysisProps) => {
-  const [period, setPeriod] = useState<TimePeriod>("total");
-  const [customStartDate, setCustomStartDate] = useState<Date>();
-  const [customEndDate, setCustomEndDate] = useState<Date>();
-
-  const getFilteredTrades = () => {
-    if (period === "total") {
-      return trades;
-    }
-
-    if (period === "custom") {
-      if (!customStartDate || !customEndDate) return [];
-      const customStart = new Date(customStartDate);
-      customStart.setHours(0, 0, 0, 0);
-      const customEnd = new Date(customEndDate);
-      customEnd.setHours(23, 59, 59, 999);
-      return trades.filter(trade => {
-        const tradeDate = new Date(trade.trade_date);
-        return tradeDate >= customStart && tradeDate <= customEnd;
-      });
-    }
-
-    return trades;
-  };
-
-  const filteredTrades = getFilteredTrades();
+const PerformanceAnalysis = ({ 
+  period, 
+  setPeriod, 
+  customStartDate, 
+  setCustomStartDate, 
+  customEndDate, 
+  setCustomEndDate,
+  filteredTrades 
+}: PerformanceAnalysisProps) => {
   const totalPnL = filteredTrades.reduce((sum, t) => sum + (Number(t.pnl) || 0), 0);
   const wins = filteredTrades.filter(t => (t.pnl || 0) > 0).length;
   const losses = filteredTrades.filter(t => (t.pnl || 0) < 0).length;

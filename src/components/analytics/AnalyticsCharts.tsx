@@ -9,9 +9,14 @@ interface AnalyticsChartsProps {
   userId: string;
 }
 
+type TimePeriod = "total" | "custom";
+
 const AnalyticsCharts = ({ userId }: AnalyticsChartsProps) => {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [period, setPeriod] = useState<TimePeriod>("total");
+  const [customStartDate, setCustomStartDate] = useState<Date>();
+  const [customEndDate, setCustomEndDate] = useState<Date>();
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -73,15 +78,52 @@ const AnalyticsCharts = ({ userId }: AnalyticsChartsProps) => {
     );
   }
 
+  const getFilteredTrades = () => {
+    if (period === "total") {
+      return trades;
+    }
+
+    if (period === "custom") {
+      if (!customStartDate || !customEndDate) return [];
+      const customStart = new Date(customStartDate);
+      customStart.setHours(0, 0, 0, 0);
+      const customEnd = new Date(customEndDate);
+      customEnd.setHours(23, 59, 59, 999);
+      return trades.filter(trade => {
+        const tradeDate = new Date(trade.trade_date);
+        return tradeDate >= customStart && tradeDate <= customEnd;
+      });
+    }
+
+    return trades;
+  };
+
+  const filteredTrades = getFilteredTrades();
+
   return (
     <div className="space-y-6">
       {/* Export PDF Button */}
       <div className="flex justify-end">
-        <ExportPDF userId={userId} trades={trades} />
+        <ExportPDF 
+          userId={userId} 
+          trades={filteredTrades} 
+          period={period}
+          customStartDate={customStartDate}
+          customEndDate={customEndDate}
+        />
       </div>
 
       {/* Performance Analysis */}
-      <PerformanceAnalysis trades={trades} />
+      <PerformanceAnalysis 
+        trades={trades} 
+        period={period}
+        setPeriod={setPeriod}
+        customStartDate={customStartDate}
+        setCustomStartDate={setCustomStartDate}
+        customEndDate={customEndDate}
+        setCustomEndDate={setCustomEndDate}
+        filteredTrades={filteredTrades}
+      />
     </div>
   );
 };

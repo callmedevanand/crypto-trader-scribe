@@ -8,9 +8,12 @@ import { Trade } from "@/types/trade";
 interface ExportPDFProps {
   userId: string;
   trades: Trade[];
+  period: "total" | "custom";
+  customStartDate?: Date;
+  customEndDate?: Date;
 }
 
-const ExportPDF = ({ trades }: ExportPDFProps) => {
+const ExportPDF = ({ trades, period, customStartDate, customEndDate }: ExportPDFProps) => {
   const handleExport = async () => {
     try {
       const doc = new jsPDF();
@@ -19,6 +22,20 @@ const ExportPDF = ({ trades }: ExportPDFProps) => {
       doc.setFontSize(20);
       doc.text("Trading P&L Report", 14, 20);
       
+      // Website link
+      doc.setFontSize(10);
+      doc.setTextColor(59, 130, 246);
+      doc.textWithLink("https://crypto-trader-scribe.lovable.app", 14, 28, { url: "https://crypto-trader-scribe.lovable.app" });
+      doc.setTextColor(0, 0, 0);
+      
+      // Period info
+      let periodText = "Period: All Trades (Total)";
+      if (period === "custom" && customStartDate && customEndDate) {
+        periodText = `Period: ${customStartDate.toLocaleDateString()} - ${customEndDate.toLocaleDateString()}`;
+      }
+      doc.setFontSize(11);
+      doc.text(periodText, 14, 38);
+      
       // Summary stats
       const totalPnL = trades.reduce((sum, t) => sum + (Number(t.pnl) || 0), 0);
       const wins = trades.filter(t => (t.pnl || 0) > 0).length;
@@ -26,10 +43,10 @@ const ExportPDF = ({ trades }: ExportPDFProps) => {
       const winRate = wins + losses > 0 ? ((wins / (wins + losses)) * 100).toFixed(1) : "0";
       
       doc.setFontSize(12);
-      doc.text(`Total P&L: $${totalPnL.toFixed(2)}`, 14, 35);
-      doc.text(`Total Trades: ${trades.length}`, 14, 42);
-      doc.text(`Win Rate: ${winRate}%`, 14, 49);
-      doc.text(`Wins: ${wins} | Losses: ${losses}`, 14, 56);
+      doc.text(`Total P&L: $${totalPnL.toFixed(2)}`, 14, 48);
+      doc.text(`Total Trades: ${trades.length}`, 14, 55);
+      doc.text(`Win Rate: ${winRate}%`, 14, 62);
+      doc.text(`Wins: ${wins} | Losses: ${losses}`, 14, 69);
       
       // Trade details table
       const tableData = trades.map(trade => [
@@ -45,7 +62,7 @@ const ExportPDF = ({ trades }: ExportPDFProps) => {
       autoTable(doc, {
         head: [["Asset", "Type", "Entry", "Exit", "P&L", "Strategy", "Date"]],
         body: tableData,
-        startY: 65,
+        startY: 78,
         theme: "grid",
         headStyles: { fillColor: [59, 130, 246] },
         styles: { fontSize: 9 },
