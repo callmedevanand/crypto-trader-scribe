@@ -9,6 +9,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ImagePlus, X } from "lucide-react";
 import { Trade } from "@/types/trade";
+import { z } from "zod";
+
+// Validation schema
+const tradeFormSchema = z.object({
+  asset_pair: z.string()
+    .min(3, "Asset pair must be at least 3 characters")
+    .max(50, "Asset pair must be less than 50 characters")
+    .regex(/^[A-Z0-9]+\/[A-Z0-9]+$/, "Asset pair must be in format like BTC/USDT"),
+  amount: z.string()
+    .min(1, "Amount is required")
+    .refine((val) => !isNaN(Number(val)) && Number(val) > 0 && Number(val) <= 1000000, {
+      message: "Amount must be between 0.01 and 1,000,000"
+    }),
+  strategy_tag: z.string()
+    .max(100, "Strategy must be less than 100 characters")
+    .optional(),
+  notes: z.string()
+    .max(10000, "Notes must be less than 10,000 characters")
+    .optional(),
+});
 
 interface AddTradeDialogProps {
   open: boolean;
@@ -21,6 +41,7 @@ const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialo
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
   const [formData, setFormData] = useState({
     asset_pair: "",
@@ -106,6 +127,30 @@ const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate form data
+    try {
+      tradeFormSchema.parse({
+        asset_pair: formData.asset_pair.toUpperCase(),
+        amount: formData.amount,
+        strategy_tag: formData.strategy_tag || undefined,
+        notes: formData.notes || undefined,
+      });
+      setValidationErrors({});
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            errors[err.path[0].toString()] = err.message;
+          }
+        });
+        setValidationErrors(errors);
+        toast.error("Please fix the validation errors");
+        return;
+      }
+    }
+    
     setLoading(true);
 
     let imageUrl = editTrade?.image_url || null;
@@ -192,10 +237,18 @@ const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialo
               id="asset_pair"
               placeholder="BTC/USDT"
               value={formData.asset_pair}
-              onChange={(e) => setFormData({ ...formData, asset_pair: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, asset_pair: e.target.value.toUpperCase() });
+                if (validationErrors.asset_pair) {
+                  setValidationErrors({ ...validationErrors, asset_pair: "" });
+                }
+              }}
               required
-              className="text-base"
+              className={`text-base ${validationErrors.asset_pair ? "border-destructive" : ""}`}
             />
+            {validationErrors.asset_pair && (
+              <p className="text-sm text-destructive mt-1">{validationErrors.asset_pair}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -242,10 +295,18 @@ const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialo
               step="0.01"
               placeholder="100.00"
               value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, amount: e.target.value });
+                if (validationErrors.amount) {
+                  setValidationErrors({ ...validationErrors, amount: "" });
+                }
+              }}
               required
-              className="text-base"
+              className={`text-base ${validationErrors.amount ? "border-destructive" : ""}`}
             />
+            {validationErrors.amount && (
+              <p className="text-sm text-destructive mt-1">{validationErrors.amount}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -254,9 +315,18 @@ const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialo
               id="strategy_tag"
               placeholder="Scalping, Swing..."
               value={formData.strategy_tag}
-              onChange={(e) => setFormData({ ...formData, strategy_tag: e.target.value })}
-              className="text-base"
+              onChange={(e) => {
+                setFormData({ ...formData, strategy_tag: e.target.value });
+                if (validationErrors.strategy_tag) {
+                  setValidationErrors({ ...validationErrors, strategy_tag: "" });
+                }
+              }}
+              maxLength={100}
+              className={`text-base ${validationErrors.strategy_tag ? "border-destructive" : ""}`}
             />
+            {validationErrors.strategy_tag && (
+              <p className="text-sm text-destructive mt-1">{validationErrors.strategy_tag}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -265,10 +335,22 @@ const AddTradeDialog = ({ open, onOpenChange, userId, editTrade }: AddTradeDialo
               id="notes"
               placeholder="Detailed trade analysis, market conditions, lessons learned..."
               value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, notes: e.target.value });
+                if (validationErrors.notes) {
+                  setValidationErrors({ ...validationErrors, notes: "" });
+                }
+              }}
               rows={4}
-              className="text-base resize-none"
+              maxLength={10000}
+              className={`text-base resize-none ${validationErrors.notes ? "border-destructive" : ""}`}
             />
+            {validationErrors.notes && (
+              <p className="text-sm text-destructive mt-1">{validationErrors.notes}</p>
+            )}
+            <p className="text-xs text-muted-foreground mt-1">
+              {formData.notes.length}/10,000 characters
+            </p>
           </div>
 
           <div className="space-y-2">
